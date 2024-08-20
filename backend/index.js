@@ -21,20 +21,26 @@ app.use(cookieParser());
 app.listen(3000, () => console.log("Server running on 3000"));
 
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: 'http://localhost:3000',
   credentials: true, 
 }))
 
 app.use('/backend/userRoute', userRoutes);
 app.use('/backend/auth', authRouter);
 
-app.use((err,req,res,next)=>{
+// app.use((err,req,res,next)=>{
+//   const statusCode = err.statusCode || 500;
+//   const message = err.message || 'Internal Server Error';
+
+//   return res.status(statusCode).json({
+//     success : false,
+//     message,
+//     statusCode
+//   })
+// })
+app.use((err, req, res, next) => {
+  console.error(err.stack); // Log the error
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
-
-  return res.status(statusCode).json({
-    success : false,
-    message,
-    statusCode
-  })
-})
+  res.status(statusCode).json({ success: false, message, statusCode });
+});
