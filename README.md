@@ -29,3 +29,6 @@ export const store = configureStore({
 
 
 after this need to wrap the persist in index.js
+
+
+utils > verifyUser > npm i cookie-parser in the root folder 
