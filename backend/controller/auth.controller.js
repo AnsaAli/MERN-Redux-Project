@@ -24,14 +24,17 @@ export const signup = async (req, res, next) => {
 };
 
 export const signin = async (req, res, next) => {
+  console.log('sign in')
   const { email, password } = req.body;
+  console.log(email, password)
   try {
     const validUser = await User.findOne({ email });
     if (!validUser) return next(errorHandler(404, "User not found"));
+
     const validPassword = bcryptjs.compareSync(password, validUser.password);
-    if (!validPassword)
-      return next(errorHandler(401, "Invalid email or password"));
-    const token = jwt.sign({ id: validUser._id }, process.env.JWT_Secret);
+    if (!validPassword)return next(errorHandler(401, "Invalid email or password"));
+    
+    const token = jwt.sign({ id: validUser._id }, process.env.JWT_Secret, { expiresIn: '1h' });
     //no need to send the password, for safty purpose
     const { password: hashPassword, ...rest } = validUser._doc;
     const expiryDate = new Date(Date.now() + 3600000);
@@ -45,7 +48,8 @@ export const signin = async (req, res, next) => {
 };
 
 export const google = async (req, res, next) => {
-  console.log("inside google controller");
+  console.log("Received request body:", req.body);
+
   try {
     const user = await User.findOne({ email: req.body.email });
 
@@ -62,7 +66,8 @@ export const google = async (req, res, next) => {
         .status(200)
         .json(rest);
     } else {
-      console.log("google contrller in else user");
+      console.log("No user found, creating new user");
+
       const generatedPassword =
         Math.random().toString(36).slice(-8) +
         Math.random().toString(36).slice(-8);
@@ -88,6 +93,7 @@ export const google = async (req, res, next) => {
         .status(200)
         .json(rest);
     }
+
   } catch (error) {
     console.log("error in google controller", error);
     next(error);
