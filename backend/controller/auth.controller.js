@@ -24,24 +24,29 @@ export const signup = async (req, res, next) => {
 };
 
 export const signin = async (req, res, next) => {
-  console.log('sign in')
+  console.log("sign in");
   const { email, password } = req.body;
-  console.log(email, password)
+  console.log(email, password);
   try {
     const validUser = await User.findOne({ email });
     if (!validUser) return next(errorHandler(404, "User not found"));
 
     const validPassword = bcryptjs.compareSync(password, validUser.password);
-    if (!validPassword)return next(errorHandler(401, "Invalid email or password"));
-    
-    const token = jwt.sign({ id: validUser._id }, process.env.JWT_Secret, { expiresIn: '1h' });
+    if (!validPassword)
+      return next(errorHandler(401, "Invalid email or password"));
+
+    const token = jwt.sign(
+      { id: validUser._id, isAdmin: validUser.isAdmin },
+      process.env.JWT_Secret,
+      { expiresIn: "1h" }
+    );
     //no need to send the password, for safty purpose
     const { password: hashPassword, ...rest } = validUser._doc;
     const expiryDate = new Date(Date.now() + 3600000);
     res
       .cookie("access_token", token, { httpOnly: true, expires: expiryDate })
       .status(200)
-      .json(rest);
+      .json({ ...rest, isAdmin: validUser.isAdmin });
   } catch (error) {
     next(error);
   }
@@ -54,19 +59,19 @@ export const google = async (req, res, next) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (user) {
-      console.log("google contrller in if user");
+      console.log("Google controller: existing user");
       const token = jwt.sign(
-        { id: user._id },
-        process.env.JWT_Secret || "default-secret-key"
+        { id: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_Secret
       );
       const { password: hashPassword, ...rest } = user._doc;
       const expiryDate = new Date(Date.now() + 3600000);
       res
         .cookie("access_token", token, { httpOnly: true, expires: expiryDate })
         .status(200)
-        .json(rest);
+        .json({ ...rest, isAdmin: user.isAdmin });
     } else {
-      console.log("No user found, creating new user");
+      console.log("Google controller: no user found, creating new user");
 
       const generatedPassword =
         Math.random().toString(36).slice(-8) +
@@ -79,27 +84,30 @@ export const google = async (req, res, next) => {
           Math.floor(Math.random() * 10000).toString(),
         email: req.body.email,
         password: hashedPassword,
+        isAdmin: false,
         profilePicture: req.body.photo,
       });
 
       await newUser.save();
 
-      const token = jwt.sign({ id: newUser._id }, process.env.JWT_Secret);
+      const token = jwt.sign(
+        { id: newUser._id, isAdmin: newUser.isAdmin },
+        process.env.JWT_Secret
+      );
       const { password: hashPassword, ...rest } = newUser._doc;
       const expiryDate = new Date(Date.now() + 3600000);
 
       res
         .cookie("access_token", token, { httpOnly: true, expires: expiryDate })
         .status(200)
-        .json(rest);
+        .json({ ...rest, isAdmin: newUser.isAdmin });
     }
-
   } catch (error) {
-    console.log("error in google controller", error);
+    console.log("Error in Google controller:", error);
     next(error);
   }
 };
 
 export const signOut = (req, res) => {
-  res.clearCookie('access_token').status(200).json('Signout success!');
+  res.clearCookie("access_token").status(200).json("Signout success!");
 };

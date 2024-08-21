@@ -5,6 +5,7 @@ import userRoutes from "./routes/userRoutes.js";
 import authRouter from './routes/auth.router.js';
 import cookieParser from "cookie-parser";
 import cors from 'cors'
+import adminRoute from "./routes/admin.router.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use(cors({
 
 app.use('/backend/userRoute', userRoutes);
 app.use('/backend/auth', authRouter);
+app.use('/backend/admin',adminRoute);
 
 // app.use((err,req,res,next)=>{
 //   const statusCode = err.statusCode || 500;
